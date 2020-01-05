@@ -1,48 +1,112 @@
 const inquirer = require("inquirer");
 const axios = require("axios");
-const electron = require("electron");
 const generateHtml = require("./generateHtml");
+const fs = require('fs');
 
-inquirer.prompt([
 
+//This is where we will obtain the info from the github call
+const objInfo = {
+    color: "",
+    username: "",
+    blog: "https://www.linkedin.com/in/clarisse-moraes-9b0054150/",
+    stars: 0,
+    info: "",
+}
+
+//This is where we will ask the user for their information for their profile
+inquirer
+    .prompt([
 {
     type: "input",
-    message: "what is your github usernmae?",
+    message: "What is your Github username?",
     name: "username"
 },
 {
     type:"list",
-    message: "whats your fave color?",
-    choices: ["red", "blue", "pink"],
-    name: "colors"
+    message: "Select the best color:",
+    choices: ["pink", "blue", "green", "red"],
+    name: "color"
+
+
 }
 
-]).then(function(answers){
-    console.log(answers);
+//This is where we will call for the information from github for the profile
+]).then(function (answers) {
+    objInfo.username = answers.username;
+    objInfo.color = answers.color;
 
-    //this is where we will access the API and and do the axios call// 
+    getDeveloperProfile();
+});
 
 
-    axios(`https://api.github.com/users/${answers.username}`)
-    .then(function(data){
+function getDeveloperProfile(){
+    const queryUrl = `https://api.github.com/users/${objInfo.username}`;
+    const starsURL = `https://api.github.com/users/${objInfo.username}/repos`;
+
+    axios.get(queryUrl)
+    .then(function (response){
+        objInfo.info= response.data;
+    
+    //This is where we will get the Github Stars//
+        axios.get(starsURL)
+        .then(function(response){
+        
+            // Loop through response.data (array of repos)
+            // Count stargazers_count for each repo
+            // saved to objInfo.stars
+
+        // for (let index = 0; index < array.length; index++) {
+        //     const element = array[index];
+            
+        // }
+
+        const html = generateHtml(objInfo);
+
+        fs.writeFile(`${objInfo.username}.html`, html, function (err) {
+
+            if (err) {
+                return console.log(err);
+            }
+        
+            console.log("Success!");
+        
+        });
+        
+        });
 
 
-        console.log(data)
+  
+
+
 
     })
 
-    const objInfo = {
-        color: answers.color,
-        stars: fromStarts,
-        user: data.user
-    }
-    const htmlDone = generateHtml(objInfo)
+    .catch(function (error) {
+        console.log(error);
+    })
+    .finally(function () {
+
+    });
+}
 
 
 
 
-    
 
 
 
-})
+
+
+
+// function makePDFFile() {
+// const html = fs.readFileSync(`./html/${username}.html`, 'utf8');
+// const options = {
+//     "height": "14in",
+//     "width": "12in",
+// };
+
+// pdf.create(html, options).toFile(`./pdf/${username}.pdf`, function (err, res) {
+//     if (err) return console.log(err);
+//     console.log(res);
+// });
+// }
